@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React from 'react';
+import { CardContent } from '@/components/ui/card';
 import { BentoGrid, BentoGridItem } from '@/components/sections/bento-grid';
+import { MathRenderer } from '@/components/sections/math-renderer';
+import { BookOpen, Compass, Activity, FileText } from 'lucide-react';
 
 interface SummaryData {
   coreContribution: string;
@@ -27,76 +29,90 @@ export const PaperSummaryDisplay: React.FC<PaperSummaryDisplayProps> = ({
 }) => {
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="h-32 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
-        <div className="h-32 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
-        <div className="h-32 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-pulse">
+        <div className="md:col-span-2 h-64 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+        <div className="h-64 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+        <div className="h-64 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+        <div className="md:col-span-2 h-64 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {title && (
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50 mb-2">
-            {title}
-          </h1>
-          {arxivUrl && (
-            <a
-              href={arxivUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
-            >
-              View on arXiv
-            </a>
-          )}
-        </div>
-      )}
-
-      <BentoGrid className="grid-cols-1 md:grid-cols-3">
+    <div className="space-y-8 max-w-6xl mx-auto">
+      <BentoGrid className="grid-cols-1 md:grid-cols-3 auto-rows-[minmax(200px,auto)]">
+        {/* Core Contribution - Main Highlight */}
         <BentoGridItem
-          className="md:col-span-1 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800"
+          className="md:col-span-2 border-2 border-slate-200/50 dark:border-slate-800/50 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm"
           title="Core Contribution"
-          icon={<div className="text-2xl">💡</div>}
+          icon={<BookOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
         >
-          <CardContent className="p-0">
-            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-              {summary.coreContribution}
-            </p>
-          </CardContent>
+          <div className="mt-4">
+            <MathRenderer 
+              content={summary.coreContribution} 
+              className="text-base text-slate-800 dark:text-slate-200 leading-relaxed font-serif"
+            />
+          </div>
         </BentoGridItem>
 
+        {/* Paper Link & Metadata */}
         <BentoGridItem
-          className="md:col-span-1 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 border-purple-200 dark:border-purple-800"
+          className="md:col-span-1 border-2 border-blue-200/50 dark:border-blue-800/50 bg-blue-50/30 dark:bg-blue-900/10"
+          title="Reference"
+          icon={<FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />}
+        >
+          <div className="mt-4 space-y-4">
+            <div className="p-3 bg-white dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Source</p>
+              <a 
+                href={arxivUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 break-all underline-offset-4 hover:underline"
+              >
+                {arxivUrl}
+              </a>
+            </div>
+            <div className="p-3 bg-white dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">AI Analyst</p>
+              <p className="text-sm font-medium text-slate-900 dark:text-slate-50">{summary.model || 'Gemini 1.5 Flash'}</p>
+            </div>
+          </div>
+        </BentoGridItem>
+
+        {/* Methodology */}
+        <BentoGridItem
+          className="md:col-span-1 border-2 border-slate-200/50 dark:border-slate-800/50 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm"
           title="Methodology"
-          icon={<div className="text-2xl">🔬</div>}
+          icon={<Compass className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
         >
-          <CardContent className="p-0">
-            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-              {summary.methodology}
-            </p>
-          </CardContent>
+          <div className="mt-4">
+            <MathRenderer 
+              content={summary.methodology} 
+              className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed"
+            />
+          </div>
         </BentoGridItem>
 
+        {/* Key Results */}
         <BentoGridItem
-          className="md:col-span-1 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 border-emerald-200 dark:border-emerald-800"
-          title="Key Results"
-          icon={<div className="text-2xl">📊</div>}
+          className="md:col-span-2 border-2 border-purple-200/50 dark:border-purple-800/50 bg-purple-50/10 dark:bg-purple-900/5 backdrop-blur-sm"
+          title="Key Results & Findings"
+          icon={<div className="text-xl">📊</div>}
         >
-          <CardContent className="p-0">
-            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-              {summary.keyResults}
-            </p>
-          </CardContent>
+          <div className="mt-4">
+            <MathRenderer 
+              content={summary.keyResults} 
+              className="text-base text-slate-800 dark:text-slate-200 leading-relaxed"
+            />
+          </div>
         </BentoGridItem>
       </BentoGrid>
 
-      {summary.model && (
-        <div className="mt-4 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-          <span>Model: {summary.model}</span>
-          {summary.tokensUsed && <span>Tokens Used: {summary.tokensUsed}</span>}
+      {summary.tokensUsed && (
+        <div className="px-6 py-4 flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-bold border-t border-slate-200/50 dark:border-slate-800/50">
+          <span>Processing Efficiency: {Math.round((summary.tokensUsed / 1000000) * 100)}% of Context</span>
+          <span>Tokens: {summary.tokensUsed.toLocaleString()}</span>
         </div>
       )}
     </div>

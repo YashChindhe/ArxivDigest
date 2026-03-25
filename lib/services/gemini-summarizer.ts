@@ -17,16 +17,19 @@ export interface SummaryResult {
 }
 
 /**
- * Generate a summary of research paper using Gemini 2.5 Flash
+ * Generate a summary of research paper using Gemini 1.5 Flash
  */
 export async function summarizePaper(
   paperText: string,
   title?: string
 ): Promise<SummaryResult> {
   try {
-    const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    // Using gemini-1.5-flash as it has the 1M token context window requested
+    const model = client.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const prompt = `You are an expert research paper summarizer. Analyze the following research paper and provide a structured summary.
+    
+Focus on academic accuracy and clarity. Use LaTeX notation for any mathematical formulas (e.g., $E=mc^2$ or $$a^2 + b^2 = c^2$$).
 
 ${title ? `Paper Title: ${title}\n` : ''}
 
@@ -40,27 +43,10 @@ Please provide your response in the following JSON format:
   "keyResults": "A summary (3-4 sentences) of the main findings and results with notable numbers or conclusions"
 }
 
-Ensure the response is valid JSON that can be parsed. Focus on clarity and academic accuracy.`;
+Ensure the response is valid JSON that can be parsed. Do not include any text outside the JSON block.`;
 
-    const response = await model.generateContent({
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: prompt }],
-        },
-      ],
-    });
-
-    // Extract text from response - handle different API response formats
-    let responseText = '';
-    const responseAny = response as any;
-    
-    if (responseAny.candidates && responseAny.candidates[0]?.content?.parts) {
-      const parts = responseAny.candidates[0].content.parts;
-      responseText = parts.map((part: any) => part.text || '').join('');
-    } else if (responseAny.content?.parts) {
-      responseText = responseAny.content.parts[0]?.text || '';
-    }
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
 
     // Parse the JSON response
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
@@ -74,8 +60,8 @@ Ensure the response is valid JSON that can be parsed. Focus on clarity and acade
       coreContribution: summary.coreContribution || '',
       methodology: summary.methodology || '',
       keyResults: summary.keyResults || '',
-      model: 'gemini-2.5-flash',
-      tokensUsed: responseAny.usageMetadata?.totalTokenCount,
+      model: 'gemini-1.5-flash',
+      tokensUsed: result.response.usageMetadata?.totalTokenCount,
     };
   } catch (error) {
     console.error('Error summarizing paper:', error);

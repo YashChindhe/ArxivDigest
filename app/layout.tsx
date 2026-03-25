@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { SidebarNav } from "@/components/sidebar-nav";
+import { Navbar } from "@/components/navbar";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,7 +16,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className="scroll-smooth"
+      className="scroll-smooth h-full"
       suppressHydrationWarning
     >
       <head>
@@ -33,7 +35,24 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col font-sans bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50">{children}</body>
+      <body className="min-h-full font-sans bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 flex flex-col md:flex-row">
+        {/* Mobile Header */}
+        <Navbar />
+
+        {/* Desktop Sidebar */}
+        <SidebarNav />
+
+        {/* Main Workspace */}
+        <div className="flex-1 flex flex-col min-w-0 md:ml-64">
+          <main className="flex-1">
+            {children}
+          </main>
+          
+          <footer className="py-6 px-10 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500">
+            ArxivDigest © 2026 • AI Research Assistant
+          </footer>
+        </div>
+      </body>
     </html>
   );
 }

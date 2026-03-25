@@ -6,70 +6,64 @@ import { ChevronDown } from 'lucide-react';
 interface MockDataSelectorProps {
   onSelect: (url: string, title: string) => void;
   isLoading?: boolean;
+  value?: string;
 }
 
 const mockPapers = [
   {
-    title: 'Select an example paper...',
+    title: 'Select Example Paper...',
     url: '',
     description: '',
   },
   {
-    title: 'Attention Is All You Need',
+    title: 'Attention Is All You Need (Transformer)',
     url: 'https://arxiv.org/pdf/1706.03762.pdf',
-    description: 'Transformer architecture - fundamental to modern AI',
+    description: 'Transformer architecture',
   },
   {
-    title: 'BERT: Pre-training of Deep Bidirectional Transformers',
+    title: 'BERT: Bidirectional Transformers',
     url: 'https://arxiv.org/pdf/1810.04805.pdf',
-    description: 'Large language model pre-training method',
+    description: 'Language model pre-training',
   },
   {
-    title: 'Language Models are Unsupervised Multitask Learners',
+    title: 'GPT-2: Unsupervised Learners',
     url: 'https://arxiv.org/pdf/1909.03341.pdf',
-    description: 'GPT-2: Zero-shot learning capabilities',
+    description: 'Zero-shot learning',
   },
   {
-    title: 'An Image is Worth 16x16 Words (Vision Transformer)',
+    title: 'ViT: Vision Transformer',
     url: 'https://arxiv.org/pdf/2010.11929.pdf',
-    description: 'Vision Transformer (ViT) - transformers for images',
-  },
-  {
-    title: 'Diffusion Models Beat GANs on Image Synthesis',
-    url: 'https://arxiv.org/pdf/2105.05233.pdf',
-    description: 'Diffusion probabilistic models for image generation',
+    description: 'Transformers for images',
   },
 ];
 
 export const MockDataSelector: React.FC<MockDataSelectorProps> = ({
   onSelect,
   isLoading,
+  value,
 }) => {
   return (
-    <div className="space-y-3">
-      <label className="block text-sm font-medium text-slate-900 dark:text-slate-50">
-        📖 Try Example Papers
+    <div className="space-y-3 w-full max-w-sm mx-auto">
+      <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-left">
+        Quick Access (Mock Data)
       </label>
       <select
+        value={value || ''}
         onChange={(e) => {
           const selected = mockPapers.find((p) => p.url === e.target.value);
-          if (selected && selected.url) {
+          if (selected) {
             onSelect(selected.url, selected.title);
           }
         }}
         disabled={isLoading}
-        className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+        className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-all shadow-sm"
       >
         {mockPapers.map((paper) => (
           <option key={paper.url} value={paper.url}>
             {paper.title}
-            {paper.description ? ` - ${paper.description}` : ''}
           </option>
         ))}
       </select>
-      <p className="text-xs text-slate-500 dark:text-slate-400">
-        Select an example to auto-fill the form, then click Summarize
-      </p>
     </div>
   );
 };

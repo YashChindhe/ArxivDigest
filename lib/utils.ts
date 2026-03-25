@@ -1,17 +1,21 @@
-import { clsx, type ClassValue } from "clsx"
+import { ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+
+import { env } from "@/env.mjs"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function extractArxivId(url: string): string {
-  // Extract arXiv ID from URL
-  const match = url.match(/arxiv\.org\/(?:abs|pdf)\/([0-9.]+)/)
-  return match ? match[1] : ''
+export function formatDate(input: string | number): string {
+  const date = new Date(input)
+  return date.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  })
 }
 
-export function formatArxivUrl(arxivId: string): string {
-  // Convert arXiv ID to PDF URL
-  return `https://arxiv.org/pdf/${arxivId}.pdf`
+export function absoluteUrl(path: string) {
+  return `${env.NEXT_PUBLIC_APP_URL}${path}`
 }

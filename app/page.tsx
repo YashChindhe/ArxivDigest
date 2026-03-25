@@ -1,49 +1,59 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
 import { PaperSummaryDisplay } from '@/components/sections/paper-summary-display';
-import { HistoryView } from '@/components/sections/history-view';
 import { MockDataSelector } from '@/components/sections/mock-data-selector';
-import { ThemeToggle } from '@/components/sections/theme-toggle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { History, Sparkles } from 'lucide-react';
-import { getAllPaperHistory, deletePaper as dbDeletePaper, Paper } from '@/lib/db/index';
+import { Sparkles, ArrowRight, BookOpen, BrainCircuit, Bookmark, Share2 } from 'lucide-react';
+import { getAllPaperHistory, Paper } from '@/lib/db/index';
 
-interface SummaryResult {
-  coreContribution: string;
-  methodology: string;
-  keyResults: string;
-  model?: string;
-  tokensUsed?: number;
-}
-
-export default function Home() {
+function HomeContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [pdfUrl, setPdfUrl] = useState('');
   const [title, setTitle] = useState('');
-  const [summary, setSummary] = useState<SummaryResult | null>(null);
+  const [summary, setSummary] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<Paper[]>([]);
+  const [activePaper, setActivePaper] = useState<Paper | null>(null);
 
-  // Load history on mount
+  const paperId = searchParams.get('paperId');
+
+  // Load history and check for active paper
   useEffect(() => {
-    const loadHistory = async () => {
+    const loadData = async () => {
       try {
-        const papers = await getAllPaperHistory();
-        setHistory(papers);
+        const response = await fetch('/api/history');
+        if (response.ok) {
+          const papers = await response.json();
+          setHistory(papers);
+          
+          if (paperId) {
+            const paper = papers.find((p: any) => p.id === paperId);
+            if (paper) {
+              setActivePaper(paper);
+              setSummary(paper.summary);
+              setPdfUrl(paper.arxivUrl);
+              setTitle(paper.title);
+            }
+          }
+        }
       } catch (err) {
-        console.error('Failed to load history:', err);
+        console.error('Failed to load data:', err);
       }
     };
-    loadHistory();
-  }, []);
+    loadData();
+  }, [paperId]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       setError(null);
       setSummary(null);
+      setActivePaper(null);
       setLoading(true);
 
       try {
@@ -60,10 +70,19 @@ export default function Home() {
 
         const data = await response.json();
         setSummary(data.summary);
-
-        // Reload history
-        const papers = await getAllPaperHistory();
-        setHistory(papers);
+        
+        // Notify all UI parts (Sidebar, Navbar) to refresh history
+        window.dispatchEvent(new Event('history-updated'));
+        
+        // Update local state for immediate feed
+        const histResponse = await fetch('/api/history');
+        if (histResponse.ok) {
+          const papers = await histResponse.json();
+          setHistory(papers);
+          if (papers.length > 0) {
+            setActivePaper(papers[0]);
+          }
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
@@ -78,172 +97,135 @@ export default function Home() {
     setTitle(mockTitle);
   };
 
-  const handleSelectHistory = (url: string, historyTitle: string) => {
-    setPdfUrl(url);
-    setTitle(historyTitle);
-  };
-
-  const handleDeleteHistory = async (id: string) => {
-    await dbDeletePaper(id);
-    const papers = await getAllPaperHistory();
-    setHistory(papers);
-  };
+  const isInitialState = !summary && !loading;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 transition-colors">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800">
-        <div className="container mx-auto px-4 py-3 flex justify-between items-center max-w-6xl">
-          <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              📚 ArxivDigest
-            </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">AI Paper Summarizer</p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowHistory(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              title="View history"
-            >
-              <History className="w-5 h-5" />
-              <span className="text-sm font-medium">{history.length}</span>
-            </button>
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
+    <div className={cn(
+      "px-6 lg:px-10 py-10 space-y-10 animate-in fade-in duration-700 w-full transition-all",
+      isInitialState ? "min-h-[80vh] flex flex-col justify-center" : "min-h-screen"
+    )}>
+      {/* Hero Section / Input Area */}
+      <section className="max-w-4xl mx-auto text-center space-y-6">
+        <h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">
+          Precision Research <span className="text-blue-600">Summarization</span>
+        </h1>
+        <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+          Extract core contributions, methodology, and key results from any ArXiv paper in seconds using advanced AI.
+        </p>
 
-      <main className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Input Section */}
-        <div className="grid lg:grid-cols-3 gap-6 mb-8">
-          <div className="lg:col-span-2">
-            <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 h-full">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-blue-500" />
-                  Summarize a Paper
-                </CardTitle>
-                <CardDescription>
-                  Paste an arXiv PDF URL or select an example below
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-900 dark:text-slate-50 mb-2">
-                      PDF URL *
-                    </label>
-                    <input
-                      type="url"
-                      value={pdfUrl}
-                      onChange={(e) => setPdfUrl(e.target.value)}
-                      placeholder="https://arxiv.org/pdf/2301.00000.pdf"
-                      className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-50 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-900 dark:text-slate-50 mb-2">
-                      Paper Title (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="e.g., Attention Is All You Need"
-                      className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-50 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={loading || !pdfUrl}
-                    className="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-400 disabled:to-slate-400 text-white rounded-lg font-medium transition-all shadow-md hover:shadow-lg disabled:shadow-none"
-                  >
-                    {loading ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <span className="animate-spin">⏳</span> Processing...
-                      </span>
-                    ) : (
-                      'Summarize Paper'
-                    )}
-                  </button>
-                </form>
-
-                {error && (
-                  <div className="mt-4 p-4 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 rounded-lg border border-red-300 dark:border-red-800">
-                    <p className="font-medium">❌ Error</p>
-                    <p className="text-sm mt-1">{error}</p>
-                  </div>
+        <form onSubmit={handleSubmit} className="relative max-w-2xl mx-auto mt-10">
+          <div className="relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+            <div className="relative flex flex-col sm:flex-row items-stretch sm:items-center bg-white dark:bg-slate-900 rounded-2xl sm:rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 p-2 overflow-hidden gap-2">
+              <div className="hidden sm:flex pl-4 pr-2 text-slate-400">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <input
+                type="url"
+                value={pdfUrl}
+                onChange={(e) => setPdfUrl(e.target.value)}
+                placeholder="Paste ArXiv URL..."
+                className="flex-1 bg-transparent border-none focus:ring-0 text-slate-900 dark:text-slate-50 placeholder-slate-400 dark:placeholder-slate-500 py-3 sm:py-3 px-4 sm:px-0"
+                required
+              />
+              <button
+                type="submit"
+                disabled={loading || !pdfUrl}
+                className="px-6 py-3 sm:py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white rounded-xl sm:rounded-lg font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
+                    Analyzing
+                  </span>
+                ) : (
+                  <>
+                    Summarize
+                    <ArrowRight className="w-4 h-4" />
+                  </>
                 )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar: Examples */}
-          <div>
-            <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 h-full">
-              <CardHeader>
-                <CardTitle className="text-base">Try Examples</CardTitle>
-                <CardDescription>Quick start with famous papers</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <MockDataSelector onSelect={handleSelectMockData} isLoading={loading} />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Summary Section - Bento Grid */}
-        {summary && (
-          <div className="animate-in fade-in slide-in-from-bottom-4">
-            <div className="mb-4">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-50 mb-2">
-                ✨ Summary
-              </h2>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                AI-generated insights for: <span className="font-medium">{title || pdfUrl}</span>
-              </p>
+              </button>
             </div>
+          </div>
+          
+          <div className="flex flex-wrap items-center justify-center gap-4 mt-6">
+            <MockDataSelector onSelect={handleSelectMockData} isLoading={loading} value={pdfUrl} />
+          </div>
+        </form>
+      </section>
+
+      {/* Error Message */}
+      {error && (
+        <Card className="max-w-2xl mx-auto border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/10 overflow-hidden">
+          <div className="p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400">
+              <span className="text-xl">⚠️</span>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-red-800 dark:text-red-200">Analysis Error</p>
+              <p className="text-xs text-red-600 dark:text-red-400 font-medium">{error}</p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Summary Section */}
+      {(summary || loading) && (
+        <section className="animate-in fade-in slide-in-from-bottom-8 duration-1000">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 pb-4 border-b border-slate-200 dark:border-slate-800">
+              <div className="space-y-1">
+                <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-sm font-medium">
+                  <Sparkles className="w-4 h-4 text-blue-500" />
+                  Research Synthesis Complete
+                </div>
+                <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-slate-50">
+                  {title || 'Current Analysis'}
+                </h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <button className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-colors shadow-sm">
+                  <Bookmark className="w-5 h-5" />
+                </button>
+                <button className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-colors shadow-sm">
+                  <Share2 className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
             <PaperSummaryDisplay
               summary={summary}
-              title={title || pdfUrl}
+              title={title}
               arxivUrl={pdfUrl}
               isLoading={loading}
             />
           </div>
-        )}
+        </section>
+      )}
 
-        {/* Empty State */}
-        {!summary && !loading && (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">📖</div>
-            <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-50 mb-2">
-              Ready to Explore Research?
-            </h3>
-            <p className="text-slate-600 dark:text-slate-400 mb-6">
-              Paste an arXiv URL or pick an example to get started
-            </p>
-            <div className="text-sm text-slate-500 dark:text-slate-500 space-y-1">
-              <p>💡 Get AI summaries in seconds</p>
-              <p>📚 Build your research library</p>
-              <p>🎯 Understand complex papers easily</p>
-            </div>
+      {/* Empty State / Features */}
+      {!summary && !loading && (
+        <section className="grid sm:grid-cols-2 lg:grid-cols-2 gap-6 max-w-6xl mx-auto pt-10">
+          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+             <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold">$</div>
+             <p className="font-bold text-slate-900 dark:text-slate-50">LaTeX Support</p>
+             <p className="text-sm text-slate-500 dark:text-slate-400">High-fidelity math rendering ensures all formulas and citations in the AI output are clear and readable.</p>
           </div>
-        )}
-      </main>
-
-      {/* History Modal */}
-      {showHistory && (
-        <HistoryView
-          history={history}
-          onClose={() => setShowHistory(false)}
-          onSelectPaper={handleSelectHistory}
-          onDelete={handleDeleteHistory}
-        />
+          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+             <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-600 dark:text-purple-400 font-bold">DB</div>
+             <p className="font-bold text-slate-900 dark:text-slate-50">Neon-Powered History</p>
+             <p className="text-sm text-slate-500 dark:text-slate-400">Your research history is securely synced to a serverless Neon PostgreSQL database for instant access anywhere.</p>
+          </div>
+        </section>
       )}
     </div>
   );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="p-10 text-center animate-pulse">Loading Researcher...</div>}>
+      <HomeContent />
+    </Suspense>
+  )
 }
