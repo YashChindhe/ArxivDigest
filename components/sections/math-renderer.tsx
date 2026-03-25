@@ -18,7 +18,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({ content, className }
         remarkPlugins={[remarkMath]}
         rehypePlugins={[rehypeKatex]}
         components={{
-          p: ({ children }: { children: React.ReactNode }) => <p className="leading-relaxed mb-4">{children}</p>,
+          p: (props: any) => <p className="leading-relaxed mb-4">{props.children}</p>,
         }}
       >
         {content}

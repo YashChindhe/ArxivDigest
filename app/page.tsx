@@ -7,7 +7,7 @@ import { PaperSummaryDisplay } from '@/components/sections/paper-summary-display
 import { MockDataSelector } from '@/components/sections/mock-data-selector';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sparkles, ArrowRight, BookOpen, BrainCircuit, Bookmark, Share2 } from 'lucide-react';
-import { getAllPaperHistory, Paper } from '@/lib/db/index';
+import { Paper } from '@/lib/db/index';
 
 function HomeContent() {
   const searchParams = useSearchParams();
