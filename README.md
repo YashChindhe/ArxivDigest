@@ -1,74 +1,76 @@
-# ArxivDigest - AI Research Paper Summarizer
+# ArxivDigest: Advanced AI Research Paper Summarizer
 
-A modern web application that uses AI to summarize research papers from arXiv with a clean, academic design using Bento Grid UI.
+ArxivDigest is a specialized research assistant designed to accelerate the literature review process for academics, student researchers, and industry professionals. By leveraging large language models with expanded context windows, it transforms complex ArXiv PDF documents into structured, high-fidelity syntheses.
 
-## Features
+## What is ArxivDigest
 
-- **PDF Processing**: Extract text from arXiv PDF URLs
-- **AI Summarization**: Uses Gemini 2.5 Flash (1M token context window) to generate insightful summaries
-- **Bento Grid UI**: Academic-inspired dashboard layout with color-coded summary sections
-- **Core Components**: Extracts Core Contribution, Methodology, and Key Results
-- **Paper Library**: Save papers for future reference (Neon Auth integration)
-- **Modern Design**: Clean, academic aesthetic with dark mode support
+ArxivDigest is an automated pipeline that extracts, analyzes, and summarizes technical research papers. It provides a visual dashboard using a Bento Grid architecture to present critical insights at a glance, allowing users to rapidly assess the relevance and core findings of recent publications without manual skimming.
 
-## Quick Start
+## When to Use
 
-First, run the development server:
+This tool is optimized for the following scenarios:
+1. Rapid Literature Screening: Quickly determining whether a newly published paper on ArXiv warrants a deep dive.
+2. Comparative Analysis: Summarizing multiple papers in a consistent format for side-by-side comparison.
+3. Cross-Disciplinary Research: Gaining high-level intuition for papers outside a researcher's primary domain of expertise.
+4. Archival Management: Building a persistent database of summarized research for long-term reference.
 
-```bash
-npm run dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## How it Works
 
-Open [http://localhost:3000](http://localhost:3000) to access ArxivDigest.
+The application follows a linear data processing workflow:
+1. Document Ingestion: Users provide a direct ArXiv PDF URL or an abstract page URL.
+2. Server-Side Extraction: The system fetches the binary PDF content and performs server-side text extraction using buffer-based parsing.
+3. AI Synthesis: Extracted text is channeled through the Google Gemini 1.5 Flash model, utilizing its 1,000,000 token context window to process even the most extensive technical reports.
+4. Structured Presentation: The AI output is categorized into three primary research pillars: Core Contribution, Methodology, and Key Results.
+5. Persistence: The summary and metadata are stored in a distributed PostgreSQL database for instant retrieval.
 
-## Setup Instructions
+## Architecture Overview
 
-### 1. Environment Variables
+The platform is built on a modern, serverless architecture designed for high throughput and low latency:
+- Client-Side: A React-based Single Page Application (SPA) using Next.js for client-side routing and state management.
+- Backend API: Discrete Next.js API Routes (Route Handlers) manage document processing and database orchestration.
+- Database Layer: A serverless PostgreSQL instance hosted on Neon, providing scalable storage for research history.
+- AI Layer: Direct integration with Google Generative AI services via the Gemini PRO series.
 
-Create `.env.local`:
+## Technical Stack
 
-```env
-NEXT_PUBLIC_GEMINI_API_KEY=your_key_here
-DATABASE_URL=postgresql://user:password@host/paper-digest-db
-```
+The following technologies form the foundation of ArxivDigest:
+- Framework: Next.js 13.5 (App Router)
+- Language: TypeScript
+- Styling: Tailwind CSS
+- Database: Neon PostgreSQL (@neondatabase/serverless)
+- AI Engine: Google Gemini 1.5 Flash (@google/generative-ai)
+- Typography: LaTeX rendering via Rehype-KaTeX and Remark-Math
+- PDF Processing: pdf-parse (Node.js Buffer context)
 
-### 2. Get API Keys
+## Methodology
 
-**Gemini API**: https://aistudio.google.com/app/apikeys
+The summarization methodology is grounded in academic precision:
+1. Context Retention: Unlike traditional RAG (Retrieval-Augmented Generation) which clips text into chunks, ArxivDigest leverages massive context windows to feed the entire paper into the model, ensuring global coherence.
+2. Prompt Engineering: The system uses specialized instructions to force the AI to identify specific structural elements (Methodology, Result sets) while maintaining mathematical notation through KaTeX.
+3. Fallback Resilience: The system includes a simulation mode that provides structural placeholders when API keys are unavailable, ensuring UI/UX continuity for demonstration purposes.
 
-**Neon Database**: https://neon.tech
+## Setup and Environment
 
-## Architecture
+To run ArxivDigest locally using Node.js v18.7.0+:
 
-**Frontend**: Next.js 16, Tailwind CSS, Bento Grid UI
-**Backend**: `/api/summarize` endpoint, pdfjs-dist
-**AI**: Gemini 2.5 Flash (1M token context)
-**Database**: Neon PostgreSQL
+1. Clone the repository and install dependencies:
+   ```bash
+   npm install
+   ```
 
-## Services
+2. Configure environment variables in `.env.local`:
+   ```env
+   DATABASE_URL=your_neon_db_url
+   NEXT_PUBLIC_GEMINI_API_KEY=your_google_ai_studio_key
+   ```
 
-- `lib/services/pdf-extraction.ts` - PDF text extraction
-- `lib/services/gemini-summarizer.ts` - AI summarization
-- `lib/db/index.ts` - Database operations
+3. Initialize the development server:
+   ```bash
+   npm run dev
+   ```
 
-## Usage
+## Deployment
 
-1. Paste arXiv PDF URL
-2. Add optional title
-3. Click Summarize
-4. View 3-part summary: Core Contribution, Methodology, Key Results
+The application is fully compatible with Vercel and other serverless providers. Ensure that the `DATABASE_URL` and `NEXT_PUBLIC_GEMINI_API_KEY` are configured in the provider's production environment settings.
 
-## Tech Stack
-
-- Next.js 16, TypeScript, Tailwind CSS
-- @google/generative-ai, pdfjs-dist
-- react-hook-form, zod, class-variance-authority
-- @vercel/postgres (Neon)
-
-## Node Version
-
-Using **Node.js v18.7.0** - no updates needed to avoid breaking other projects
+ArxivDigest © 2026. All rights reserved.
