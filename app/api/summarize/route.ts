@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { summarizePaper } from '@/lib/services/gemini-summarizer';
+import { summarizePaper } from '@/lib/services/openrouter-summarizer';
 import { savePaper, initializeDatabase } from '@/lib/db/index';
 import axios from 'axios';
 
@@ -131,8 +131,8 @@ export async function POST(request: NextRequest) {
     // Limit text to stay within token limits (1M tokens is huge, 500k characters is safe)
     const limitedText = pdfText.substring(0, 500000);
 
-    // Generate summary using Gemini
-    console.log('Generating summary with Gemini...');
+    // Generate summary using OpenRouter
+    console.log('Generating summary with OpenRouter...');
     const summary = await summarizePaper(limitedText, title);
 
     // Save to database
