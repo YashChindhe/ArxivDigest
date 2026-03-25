@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { summarizePaper } from '@/lib/services/gemini-summarizer';
+import { savePaper } from '@/lib/db/index';
 import axios from 'axios';
 
 export const maxDuration = 60; // Set function timeout to 60 seconds for longer processing
@@ -21,6 +22,14 @@ async function extractTextFromPDFBuffer(buffer: Buffer): Promise<{ text: string;
     console.error('Error parsing PDF:', error);
     throw new Error(`Failed to parse PDF: ${error instanceof Error ? error.message : String(error)}`);
   }
+}
+
+/**
+ * Extract title from PDF text (heuristic)
+ */
+function extractPaperId(url: string): string {
+  const match = url.match(/\/(\d+\.\d+)/);
+  return match ? match[1] : 'unknown';
 }
 
 export async function POST(request: NextRequest) {
@@ -72,6 +81,16 @@ export async function POST(request: NextRequest) {
     // Generate summary using Gemini
     console.log('Generating summary with Gemini...');
     const summary = await summarizePaper(limitedText, title);
+
+    // Save to history
+    const paperId = extractPaperId(pdfUrl);
+    await savePaper({
+      id: `${paperId}-${Date.now()}`,
+      title: title || pdfUrl,
+      arxivUrl: pdfUrl,
+      summary,
+      timestamp: new Date().toISOString(),
+    });
 
     return NextResponse.json({
       success: true,

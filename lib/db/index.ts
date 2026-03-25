@@ -11,7 +11,7 @@
 // import { sql } from '@vercel/postgres';
 
 /**
- * For now, using a placeholder implementation
+ * For now, using a placeholder implementation with in-memory storage
  * Replace with actual @vercel/postgres once configured
  */
 
@@ -24,9 +24,13 @@ export interface Paper {
     methodology: string;
     keyResults: string;
   };
-  savedAt: Date;
+  timestamp: string;
   userId?: string;
 }
+
+// In-memory storage for demo purposes
+// In production, this would be a real database
+const paperHistory: Record<string, Paper> = {};
 
 /**
  * Initialize database tables (run once during setup)
@@ -38,12 +42,22 @@ export async function initializeDatabase() {
 }
 
 /**
- * Save a paper to the database
- * Placeholder - implement with actual database client
+ * Save a paper to the database (and history)
  */
 export async function savePaper(paper: Paper) {
-  console.log('Saving paper:', paper.id);
+  paperHistory[paper.id] = paper;
+  console.log('Paper saved to history:', paper.id);
   return paper;
+}
+
+/**
+ * Get all papers from history
+ */
+export async function getAllPaperHistory(): Promise<Paper[]> {
+  return Object.values(paperHistory).sort(
+    (a, b) =>
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
 }
 
 /**
@@ -52,5 +66,16 @@ export async function savePaper(paper: Paper) {
  */
 export async function getUserPapers(userId: string) {
   console.log('Getting papers for user:', userId);
-  return [];
+  return Object.values(paperHistory).filter((p) => p.userId === userId);
+}
+
+/**
+ * Delete a paper from history
+ */
+export async function deletePaper(paperId: string): Promise<boolean> {
+  if (paperHistory[paperId]) {
+    delete paperHistory[paperId];
+    return true;
+  }
+  return false;
 }

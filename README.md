@@ -4,12 +4,12 @@ A modern web application that uses AI to summarize research papers from arXiv wi
 
 ## Features
 
-- 📄 **PDF Processing**: Extract text from arXiv PDF URLs
-- 🤖 **AI Summarization**: Uses Gemini 2.5 Flash (1M token context window) to generate insightful summaries
-- 📊 **Bento Grid UI**: Academic-inspired dashboard layout with color-coded summary sections
-- 🔑 **Core Components**: Extracts Core Contribution, Methodology, and Key Results
-- 📚 **Paper Library**: Save papers for future reference (Neon Auth integration)
-- 🎨 **Modern Design**: Clean, academic aesthetic with dark mode support
+- **PDF Processing**: Extract text from arXiv PDF URLs
+- **AI Summarization**: Uses Gemini 2.5 Flash (1M token context window) to generate insightful summaries
+- **Bento Grid UI**: Academic-inspired dashboard layout with color-coded summary sections
+- **Core Components**: Extracts Core Contribution, Methodology, and Key Results
+- **Paper Library**: Save papers for future reference (Neon Auth integration)
+- **Modern Design**: Clean, academic aesthetic with dark mode support
 
 ## Quick Start
 
